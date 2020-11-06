@@ -1,10 +1,10 @@
 Package: ESPENAPI
 Type: Package
-Title: A Tool to Request Data from the ESPEN Portal API
+Title: A Tool to Access Data from the ESPEN Portal API
 Version: 0.1.0
 Author: Olatunji Johnson [cre, aut] (<https://orcid.org/0000-0002-4080-0999>)
 Maintainer: Olatunji Johnson <olatunjijohnson21111@gmail.com>
-Description: Allows users to request Neglected Tropical Diseases (NTDs) data from
+Description: Allows users to access Neglected Tropical Diseases (NTDs) data from
     the ESPEN portal API. Users provide parameters as specified in
     <https://admin.espen.afro.who.int/docs/api/data> and the function returns a 
     dataframe or JSON strings.

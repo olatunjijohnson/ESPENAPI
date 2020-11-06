@@ -3,7 +3,7 @@
 #' @title A function to request data from the ESPEN portal using API
 #' @description Allows users to request data for countries through the ESPEN API.  Users provide parameters as specified in <\url{https://admin.espen.afro.who.int/docs/api/data}> or as described below and the function returns a JSON string or data frame.
 #' @details See <\url{https://espen.afro.who.int/tools-resources/download-data}>  for more details on the data available.
-#' @param api_key the API key from ESPEN. You can request the key from ESPEN portal. To use the default API key, ignore the argument or set api_key = NULL.
+#' @param api_key the API key from ESPEN. You can request the key from ESPEN portal. To use the Authors API key, ignore the argument or set api_key = NULL.
 #' @param country the name of the country. E.g `Ghana`
 #' @param iso2 optional: country ISO2 code, e.g. `GH`. you can either specify a country name or the ISO2 code
 #' @param disease specify the disease of interest, options are lf , oncho , loa , sch , sth , trachoma , coendemicity
@@ -21,7 +21,7 @@
 #' @return A dataframe or JSON file of the data
 #' @examples
 #' library(ESPENAPI)
-#' # extract the STH data from Nigeria at site level from year 2010 to 2020.
+#' # extract the STH data from Kenya at site level for year 2010.
 #' data  <- ESPEN_API_data(country="Nigeria", disease="sth",
 #' level="sitelevel", start_year=2010, end_year=2010)
 #' head(data)
