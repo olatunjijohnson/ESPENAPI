@@ -15,7 +15,7 @@
 #' @param limit to specify how many records to return
 #' @param offset to specify how many records to skip
 #' @param attributes options are IU_ID, Endemicity, MDA, EffMDA. This is basically used to reduce the data.
-#' @param df logical: should the function return a dataframe (default) or JSON.
+#' @param df logical: should the function return a dataframe (default) or list containing of the JSON strings.
 #' @export
 #' @import httr jsonlite
 #' @return A dataframe or JSON file of the data
@@ -37,6 +37,8 @@ ESPEN_API_data <- function(api_key=NULL, country= NULL, iso2=NULL, disease="sth"
   } else{
     api_key = paste0("api_key=", api_key)
   }
+
+  path <- "https://admin.espen.afro.who.int/api/data?"
 
 
   if(is.null(country) & is.null(iso2)) stop(paste0("Please specify the country you are requesting the data.
@@ -90,17 +92,44 @@ ESPEN_API_data <- function(api_key=NULL, country= NULL, iso2=NULL, disease="sth"
 
     param <- paste0(switch(which(c(!is.null(country), !is.null(iso2)))[1], country, iso2), disease, level, type, subtype, start_year,
                     end_year, limit, offset, attributes, api_key)
-  param
-  api_url <- paste0("https://admin.espen.afro.who.int/api/data?", param)
-  api_url
+
+  api_url <- paste0(path, param)
 
   res <- httr::GET(api_url)
+
+  if (http_type(res) != "application/json") {
+    stop("API did not return json", call. = FALSE)
+  }
+
+
+
+  if (httr::http_error(res)) {
+    parsed <- jsonlite::fromJSON(httr::content(res, "text"), simplifyVector = FALSE)
+    stop(
+      sprintf(
+        "ESPEN API request failed [%s]\n%s\n<%s>",
+        httr::status_code(res),
+        parsed$message,
+        parsed$documentation_url
+      ),
+      call. = FALSE
+    )
+  }
+
+
 
   if(df){
     result = jsonlite::fromJSON(rawToChar(res$content))
   }else{
     ### return JSON result
-    result = rawToChar(res$content)
+    result =   structure(
+      list(
+        content = rawToChar(res$content),
+        path = path,
+        response = res
+      ),
+      class = "ESPEN_api"
+    )
   }
   return(result)
 }
