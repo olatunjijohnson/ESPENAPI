@@ -11,8 +11,10 @@ The goal of ESPENAPI is to provide access to Neglected Tropical Diseases
 (NTDs) data from the ESPEN portal and provide a minimum
 visualisation/summary of the data. Instead of having to visit the ESPEN
 portal to download the data, this R package allows the user to acquire
-the data and process it directly from
-R.
+the data and process it directly from R. A web application to visualise
+the data is currently under development, a preliminary version can be
+found here
+<https://olatunjijohnson.shinyapps.io/espenshiny/>
 
 ## Installation
 
