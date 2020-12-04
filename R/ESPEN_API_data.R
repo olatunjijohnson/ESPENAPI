@@ -3,7 +3,7 @@
 #' @title A function to request data from the ESPEN portal using API
 #' @description Allows users to request data for countries through the ESPEN API.  Users provide parameters as specified in <\url{https://admin.espen.afro.who.int/docs/api/data}> or as described below and the function returns a JSON string or data frame.
 #' @details See <\url{https://espen.afro.who.int/tools-resources/download-data}>  for more details on the data available.
-#' @param api_key the API key from ESPEN. You can request the key from ESPEN portal. To use the Authors API key, ignore the argument or set api_key = NULL.
+#' @param api_key the API key from ESPEN. You can request the key from ESPEN portal. We reccomend to set up the API key in the R environment as shown in the github repository. In this case you won't need to use this argument.
 #' @param country the name of the country. E.g `Ghana`
 #' @param iso2 optional: country ISO2 code, e.g. `GH`. you can either specify a country name or the ISO2 code
 #' @param disease specify the disease of interest, options are lf , oncho , loa , sch , sth , trachoma , coendemicity
@@ -33,7 +33,7 @@ ESPEN_API_data <- function(api_key=NULL, country= NULL, iso2=NULL, disease="sth"
 
 
   if(is.null(api_key)){
-    api_key = paste0("api_key=3268f2ddeeba435a9a1b090e81330ca0")
+    api_key = paste0("api_key=", Sys.getenv("ESPEN_API_KEY"))
   } else{
     api_key = paste0("api_key=", api_key)
   }
