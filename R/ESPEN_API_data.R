@@ -42,9 +42,9 @@ ESPEN_API_data <- function(api_key=NULL, country= NULL, iso2=NULL, disease="sth"
   path <- "https://admin.espen.afro.who.int/api/data?"
 
 
-  if(is.null(country) & is.null(iso2)) stop(paste0("Please specify the country you are requesting the data.
-                                            You are either supply the name of the country or ISO2 code for the country.
-                                                   E.g country=`Ghana', or iso2=`GH'"))
+  # if(is.null(country) & is.null(iso2)) stop(paste0("Please specify the country you are requesting the data.
+  #                                           You are either supply the name of the country or ISO2 code for the country.
+  #                                                  E.g country=`Ghana', or iso2=`GH'"))
 
 
 
@@ -78,20 +78,19 @@ ESPEN_API_data <- function(api_key=NULL, country= NULL, iso2=NULL, disease="sth"
     subtype <- NULL
   }
 
-  switch(which(c(!is.null(country), !is.null(iso2)))[1], country, iso2)
 
 
   if(!is.null(start_year)) start_year = paste0("start_year=", start_year, "&")
 
   if(!is.null(end_year)) end_year = paste0("end_year=", end_year, "&")
 
-  if(any(c(is.null(country), is.null(iso2)))==TRUE)
 
 
 
 
 
-    param <- paste0(switch(which(c(!is.null(country), !is.null(iso2)))[1], country, iso2), disease, level, type, subtype, start_year,
+
+    param <- paste0(country, iso2, disease, level, type, subtype, start_year,
                     end_year, limit, offset, attributes, api_key)
 
   api_url <- paste0(path, param)

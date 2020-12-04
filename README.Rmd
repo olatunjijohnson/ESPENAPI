@@ -71,3 +71,5 @@ data  <- ESPENAPI::ESPEN_API_data(country = "Kenya", disease = "sth", level = "s
 1. Develop another function to download maps from ESPEN portal
 
 2. Develop dashboard to summarise the data
+
+3. Download data for multiple countries
