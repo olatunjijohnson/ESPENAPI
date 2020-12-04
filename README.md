@@ -33,6 +33,28 @@ You can install the development version from
 devtools::install_github("olatunjijohnson/ESPENAPI", ref="main")
 ```
 
+## Set up ESPEN API key
+
+In order to access the ESPEN Platform APIs, you must first request an
+API key from the [ESPENE
+website](https://admin.espen.afro.who.int/docs/api).
+
+Although it is possible to provide the ESPEN API key as a function
+argument we recommend to store it safely in the R environment. A quick
+way to do this is by using the `edit_r_environ` function from the
+`usethis` package.
+
+``` r
+usethis::edit_r_environ()
+```
+
+This will open the `.Renviron` file for editing. Add this line to store
+your key:
+
+    ESPEN_API_KEY="my_key"
+
+save it and restart R for changes to take effect.
+
 ## Example
 
 This is a basic example which shows how to download the STH data at site
@@ -41,14 +63,10 @@ level from Kenya for 2010.
 ``` r
 library(ESPENAPI)
 data  <- ESPENAPI::ESPEN_API_data(country="Kenya", disease="sth", level="sitelevel", start_year=2010, end_year=2010)
-## basic example code
 ```
 
 ## Further improvements
 
-1.  Allows user to only supply api\_key once and it saves into the
-    environment
+1.  Develop another function to download maps from ESPEN portal
 
-2.  Develop another function to download maps from ESPEN portal
-
-3.  Develop dashboard to summarise the data
+2.  Develop dashboard to summarise the data
