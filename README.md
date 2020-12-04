@@ -62,7 +62,8 @@ level from Kenya for 2010.
 
 ``` r
 library(ESPENAPI)
-data  <- ESPENAPI::ESPEN_API_data(country="Kenya", disease="sth", level="sitelevel", start_year=2010, end_year=2010)
+data  <- ESPENAPI::ESPEN_API_data(country="Kenya", disease="sth", level="sitelevel",
+                                  start_year=2010, end_year=2010)
 ```
 
 ## Further improvements
