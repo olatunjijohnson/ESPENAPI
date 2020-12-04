@@ -19,6 +19,7 @@
 #' @export
 #' @import httr jsonlite
 #' @return A dataframe or JSON file of the data
+#' @author Olatunji Johnson \email{o.johnson@@lancaster.ac.uk}
 #' @examples
 #' library(ESPENAPI)
 #' # extract the STH data from Kenya at site level for year 2010.

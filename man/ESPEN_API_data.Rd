@@ -21,7 +21,7 @@ ESPEN_API_data(
 )
 }
 \arguments{
-\item{api_key}{the API key from ESPEN. You can request the key from ESPEN portal. To use the default API key, ignore the argument or set api_key = NULL.}
+\item{api_key}{the API key from ESPEN. You can request the key from ESPEN portal. We reccomend to set up the API key in the R environment as shown in the github repository. In this case you won't need to use this argument.}
 
 \item{country}{the name of the country. E.g `Ghana`}
 
@@ -45,7 +45,7 @@ ESPEN_API_data(
 
 \item{attributes}{options are IU_ID, Endemicity, MDA, EffMDA. This is basically used to reduce the data.}
 
-\item{df}{logical: should the function return a dataframe (default) or JSON.}
+\item{df}{logical: should the function return a dataframe (default) or list containing of the JSON strings.}
 }
 \value{
 A dataframe or JSON file of the data
@@ -58,8 +58,11 @@ See <\url{https://espen.afro.who.int/tools-resources/download-data}>  for more d
 }
 \examples{
 library(ESPENAPI)
-# extract the STH data from Nigeria at site level from year 2010 to 2020.
+# extract the STH data from Kenya at site level for year 2010.
 data  <- ESPEN_API_data(country="Nigeria", disease="sth",
 level="sitelevel", start_year=2010, end_year=2010)
 head(data)
+}
+\author{
+Olatunji Johnson \email{o.johnson@lancaster.ac.uk}
 }
