@@ -37,7 +37,8 @@ test_that("GHO returns a data frame for onchocerciasis treatment", {
   )
   expect_s3_class(result, "data.frame")
   expect_named(result, c("indicator_code", "indicator_name", "country_iso3",
-                          "year", "value", "low", "high", "comments"))
+                          "who_region", "year", "value", "value_text",
+                          "low", "high", "comments"))
   expect_gt(nrow(result), 0)
   expect_true(all(result$year >= 2018))
   expect_true(all(result$year <= 2022))

@@ -156,7 +156,7 @@ gho_ntd_data <- function(indicator,
   url <- paste0(
     "https://ghoapi.azureedge.net/api/", indicator,
     "?$filter=", utils::URLencode(filter_str, reserved = TRUE),
-    "&$select=SpatialDim,TimeDim,NumericValue,Low,High,Comments"
+    "&$select=SpatialDim,ParentLocation,TimeDim,Value,NumericValue,Low,High,Comments"
   )
 
   res <- httr::GET(url)
@@ -183,9 +183,10 @@ gho_ntd_data <- function(indicator,
     return(
       data.frame(
         indicator_code = character(), indicator_name = character(),
-        country_iso3   = character(), year           = integer(),
-        value          = numeric(),  low             = numeric(),
-        high           = numeric(),  comments        = character(),
+        country_iso3   = character(), who_region     = character(),
+        year           = integer(),   value          = numeric(),
+        value_text     = character(), low            = numeric(),
+        high           = numeric(),   comments       = character(),
         stringsAsFactors = FALSE
       )
     )
@@ -200,10 +201,12 @@ gho_ntd_data <- function(indicator,
     indicator_code = indicator,
     indicator_name = ind_name[1],
     country_iso3   = rows$SpatialDim,
+    who_region     = if ("ParentLocation" %in% names(rows)) rows$ParentLocation else NA_character_,
     year           = as.integer(rows$TimeDim),
     value          = rows$NumericValue,
-    low            = if ("Low"  %in% names(rows)) rows$Low  else NA_real_,
-    high           = if ("High" %in% names(rows)) rows$High else NA_real_,
+    value_text     = if ("Value"    %in% names(rows)) rows$Value    else NA_character_,
+    low            = if ("Low"      %in% names(rows)) rows$Low      else NA_real_,
+    high           = if ("High"     %in% names(rows)) rows$High     else NA_real_,
     comments       = if ("Comments" %in% names(rows)) rows$Comments else NA_character_,
     stringsAsFactors = FALSE
   )
