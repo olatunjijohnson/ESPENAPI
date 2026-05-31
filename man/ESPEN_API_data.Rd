@@ -2,7 +2,7 @@
 % Please edit documentation in R/ESPEN_API_data.R
 \name{ESPEN_API_data}
 \alias{ESPEN_API_data}
-\title{A function to request data from the ESPEN portal using API}
+\title{Request data from the ESPEN portal API}
 \usage{
 ESPEN_API_data(
   api_key = NULL,
@@ -21,48 +21,74 @@ ESPEN_API_data(
 )
 }
 \arguments{
-\item{api_key}{the API key from ESPEN. You can request the key from ESPEN portal. We reccomend to set up the API key in the R environment as shown in the github repository. In this case you won't need to use this argument.}
+\item{api_key}{API key from the ESPEN portal. If \code{NULL} (default) the
+function reads the \code{ESPEN_API_KEY} environment variable.}
 
-\item{country}{the name of the country. E.g `Ghana`}
+\item{country}{Country name, e.g. \code{"Nigeria"}. Either \code{country}
+or \code{iso2} must be supplied.}
 
-\item{iso2}{optional: country ISO2 code, e.g. `GH`. you can either specify a country name or the ISO2 code}
+\item{iso2}{ISO2 country code, e.g. \code{"NG"}. Alternative to
+\code{country}; ignored if \code{country} is also supplied.}
 
-\item{disease}{specify the disease of interest, options are lf , oncho , loa , sch , sth , trachoma , coendemicity}
+\item{disease}{Disease of interest. One of \code{"lf"}, \code{"oncho"},
+\code{"loa"}, \code{"sch"}, \code{"sth"}, \code{"trachoma"},
+\code{"coendemicity"}. Default \code{"sth"}.}
 
-\item{level}{specify which the level of the data, options are `iu` and  `sitelevel`. iu means implemantation unit.}
+\item{level}{Spatial level of the data. \code{"iu"} (implementation unit)
+or \code{"sitelevel"}. Default \code{"sitelevel"}.}
 
-\item{type}{logical: should you want a forcast of MDA or impact assessment. default is FALSE.}
+\item{type}{Logical. Set \code{TRUE} to request forecast data
+(MDA or impact assessment). Default \code{FALSE}.}
 
-\item{subtype}{only use when type =TRUE, options are mda and impact_assessment.}
+\item{subtype}{Used only when \code{type = TRUE}. One of \code{"mda"} or
+\code{"impact_assessment"}. Default \code{"mda"}.}
 
-\item{start_year}{specify the starting year of the data, e.g start_year = 2010}
+\item{start_year}{Starting year, e.g. \code{2010}.}
 
-\item{end_year}{specify the starting year of the data, e.g end_year = 2020}
+\item{end_year}{Ending year, e.g. \code{2020}.}
 
-\item{limit}{to specify how many records to return}
+\item{limit}{Maximum number of records to return.}
 
-\item{offset}{to specify how many records to skip}
+\item{offset}{Number of records to skip (for pagination).}
 
-\item{attributes}{options are IU_ID, Endemicity, MDA, EffMDA. This is basically used to reduce the data.}
+\item{attributes}{Character string of attribute names to return, e.g.
+\code{"IU_ID,Endemicity,MDA,EffMDA"}.}
 
-\item{df}{logical: should the function return a dataframe (default) or list containing of the JSON strings.}
+\item{df}{Logical. Return a data frame (\code{TRUE}, default) or a list
+containing the raw JSON string and response object (\code{FALSE}).}
 }
 \value{
-A dataframe or JSON file of the data
+A data frame or a named list of class \code{"ESPEN_api"}.
 }
 \description{
-Allows users to request data for countries through the ESPEN API.  Users provide parameters as specified in <\url{https://admin.espen.afro.who.int/docs/api/data}> or as described below and the function returns a JSON string or data frame.
+Downloads Neglected Tropical Disease (NTD) data from the ESPEN
+  portal for one or more countries. Parameters follow the ESPEN API
+  specification at \url{https://espenjapapi.afro.who.int/docs/api/data}.
 }
 \details{
-See <\url{https://espen.afro.who.int/tools-resources/download-data}>  for more details on the data available.
+An API key is required. Request one from the ESPEN portal at
+  \url{https://espen.afro.who.int}. The recommended approach is to store it
+  in your \code{.Renviron} file as \code{ESPEN_API_KEY=your_key} (run
+  \code{usethis::edit_r_environ()} to open the file). The function will then
+  pick it up automatically without you needing to pass it each time.
 }
 \examples{
-library(ESPENAPI)
-# extract the STH data from Kenya at site level for year 2010.
-data  <- ESPEN_API_data(country="Nigeria", disease="sth",
-level="sitelevel", start_year=2010, end_year=2010)
+\dontrun{
+# Store your key in .Renviron first:
+#   usethis::edit_r_environ()
+#   Add line: ESPEN_API_KEY=your_key_here
+
+# STH data for Nigeria at site level, 2010-2015
+data <- ESPEN_API_data(
+  country    = "Nigeria",
+  disease    = "sth",
+  level      = "sitelevel",
+  start_year = 2010,
+  end_year   = 2015
+)
 head(data)
 }
+}
 \author{
-Olatunji Johnson \email{o.johnson@lancaster.ac.uk}
+Olatunji Johnson \email{olatunjijohnson21111@gmail.com}
 }

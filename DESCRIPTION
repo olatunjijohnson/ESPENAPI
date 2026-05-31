@@ -1,21 +1,36 @@
 Package: ESPENAPI
 Type: Package
-Title: A Tool to Access Data from the ESPEN Portal API
-Version: 0.1.0
-Author: Olatunji Johnson [cre, aut] (<https://orcid.org/0000-0002-4080-0999>), Claudio Fronterre [ctb] (<https://orcid.org/0000-0001-6723-9727>)
-Maintainer: Olatunji Johnson <olatunjijohnson21111@gmail.com>
-Description: Allows users to access Neglected Tropical Diseases (NTDs) data from
-    the ESPEN portal API. Users provide parameters as specified in
-    <https://admin.espen.afro.who.int/docs/api/data> and the function returns a 
-    dataframe or JSON strings.
-Imports: jsonlite, httr
-License: GPL
-Encoding: UTF-8
-LazyData: true
-RoxygenNote: 7.0.2
-Suggests: 
+Title: Access NTD Data from the ESPEN Portal API
+Version: 0.2.0
+Authors@R: c(
+    person("Olatunji", "Johnson", role = c("cre", "aut"),
+           email = "olatunjijohnson21111@gmail.com",
+           comment = c(ORCID = "0000-0002-4080-0999")),
+    person("Claudio", "Fronterre", role = "ctb",
+           comment = c(ORCID = "0000-0001-6723-9727")))
+Description: Provides a single function to download Neglected Tropical Disease
+    (NTD) data from the ESPEN (Expanded Special Project for Elimination of
+    Neglected Tropical Diseases) portal API. Users supply a country name or
+    ISO2 code, disease, spatial level, and optional year range, and receive a
+    tidy data frame. Supported diseases include lymphatic filariasis (lf),
+    onchocerciasis (oncho), loiasis (loa), schistosomiasis (sch), soil-
+    transmitted helminths (sth), trachoma, and co-endemicity. An API key is
+    required and can be obtained from the ESPEN portal at
+    <https://espen.afro.who.int>.
+Imports:
+    httr,
+    jsonlite
+Suggests:
+    withr,
+    testthat (>= 3.0.0),
     knitr,
     rmarkdown,
-    testthat (>= 2.1.0),
     covr
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.3.2
 VignetteBuilder: knitr
+URL: https://github.com/olatunjijohnson/ESPENAPI
+BugReports: https://github.com/olatunjijohnson/ESPENAPI/issues
+Config/testthat/edition: 3
