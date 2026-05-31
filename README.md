@@ -5,71 +5,108 @@
 
 <!-- badges: start -->
 
+[![R-CMD-check](https://github.com/olatunjijohnson/ESPENAPI/workflows/R-CMD-check/badge.svg)](https://github.com/olatunjijohnson/ESPENAPI/actions)
 <!-- badges: end -->
 
-The goal of ESPENAPI is to provide access to Neglected Tropical Diseases
-(NTDs) data from the ESPEN portal and provide a minimum
-visualisation/summary of the data. Instead of having to visit the ESPEN
-portal to download the data, this R package allows the user to acquire
-the data and process it directly from R. A web application to visualise
-the data is currently under development, a preliminary version can be
-found here
-<https://olatunjijohnson.shinyapps.io/espenshiny/>
+An R package for downloading Neglected Tropical Disease (NTD) data
+directly from the [ESPEN portal](https://espen.afro.who.int) API — no
+browser, no manual exports.
+
+## Features
+
+- Download data for any ESPEN country with a single function call
+- Pass a **vector of countries** and get one combined data frame back
+- All **7 NTD disease types**: lf, oncho, loa, sch, sth, trachoma,
+  coendemicity
+- Both spatial levels: **implementation unit** and **site level**
+- Optional **forecast data** (MDA and impact assessment)
+- Pagination support for large datasets
+- Reference tables: `espen_diseases()`, `espen_levels()`
 
 ## Installation
 
-<!-- You can install the released version of ESPENAPI from [CRAN](https://CRAN.R-project.org) with:
-
 ``` r
-install.packages("ESPENAPI")
-```
--->
-
-You can install the development version from
-[GitHub](https://github.com/) with:
-
-``` r
-# install.packages("devtools")
-devtools::install_github("olatunjijohnson/ESPENAPI", ref="main")
+# install.packages("remotes")
+remotes::install_github("olatunjijohnson/ESPENAPI")
 ```
 
-## Set up ESPEN API key
+## API key setup
 
-In order to access the ESPEN Platform APIs, you must first request an
-API key from the [ESPENE
-website](https://admin.espen.afro.who.int/docs/api).
-
-Although it is possible to provide the ESPEN API key as a function
-argument we recommend to store it safely in the R environment. A quick
-way to do this is by using the `edit_r_environ` function from the
-`usethis` package.
+Request a free API key from <https://espen.afro.who.int>, then store it
+in your `.Renviron`:
 
 ``` r
 usethis::edit_r_environ()
+# Add this line: ESPEN_API_KEY=your_key_here
+# Save the file and restart R
 ```
 
-This will open the `.Renviron` file for editing. Add this line to store
-your key:
+Or call `espen_key_setup()` for step-by-step instructions.
 
-    ESPEN_API_KEY="my_key"
+## Usage
 
-save it and restart R for changes to take effect.
-
-## Example
-
-This is a basic example which shows how to download the STH data at site
-level from Kenya for 2010.
+### Single country
 
 ``` r
 library(ESPENAPI)
-data  <- ESPENAPI::ESPEN_API_data(country = "Kenya", disease = "sth", level = "sitelevel",
-                                  start_year = 2010, end_year = 2010)
+
+dat <- ESPEN_API_data(
+  country    = "Nigeria",
+  disease    = "sth",
+  level      = "sitelevel",
+  start_year = 2010,
+  end_year   = 2015
+)
+head(dat)
 ```
 
-## Further improvements
+### Multiple countries in one call
 
-1.  Develop another function to download maps from ESPEN portal
+``` r
+multi <- ESPEN_API_data(
+  country    = c("Nigeria", "Ghana", "Kenya"),
+  disease    = "lf",
+  level      = "iu",
+  start_year = 2015,
+  end_year   = 2020,
+  verbose    = TRUE
+)
+table(multi$Country)
+```
 
-2.  Develop dashboard to summarise the data
+### Using ISO2 codes
 
-3.  Download data for multiple countries
+``` r
+dat <- ESPEN_API_data(
+  iso2       = c("NG", "GH"),
+  disease    = "sth",
+  level      = "sitelevel",
+  start_year = 2010,
+  end_year   = 2010
+)
+```
+
+### Browse valid options
+
+``` r
+espen_diseases()   # all disease codes with full names
+espen_levels()     # spatial level descriptions
+```
+
+## Available diseases
+
+| Code           | Disease                    |
+|----------------|----------------------------|
+| `lf`           | Lymphatic filariasis       |
+| `oncho`        | Onchocerciasis             |
+| `loa`          | Loiasis                    |
+| `sch`          | Schistosomiasis            |
+| `sth`          | Soil-transmitted helminths |
+| `trachoma`     | Trachoma                   |
+| `coendemicity` | Co-endemicity              |
+
+## Further information
+
+See `vignette("Introduction", package = "ESPENAPI")` for a full tutorial
+covering forecast data, pagination, column filtering, and worked
+examples.

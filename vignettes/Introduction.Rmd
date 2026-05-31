@@ -1,22 +1,300 @@
 ---
-title: "Introduction"
+title: "Introduction to ESPENAPI"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Introduction}
+  %\VignetteIndexEntry{Introduction to ESPENAPI}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
+```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment  = "#>",
+  eval     = FALSE
 )
 ```
-This is a gentle introduction on how to use this package to request NTD data from the ESPEN portal. For example, if you want to request STH data in Nigeria for a certain period of time, say 2010-2015. See below the code to use.
 
-```{r setup, eval = FALSE}
+## What is ESPEN?
+
+The **Expanded Special Project for Elimination of Neglected Tropical
+Diseases** (ESPEN) is a WHO initiative that coordinates the surveillance
+and control of NTDs in the WHO African Region. The ESPEN portal hosts
+country-level and site-level programme data for seven diseases:
+
+| Code | Disease |
+|------|---------|
+| `lf` | Lymphatic filariasis |
+| `oncho` | Onchocerciasis (river blindness) |
+| `loa` | Loiasis (eye worm) |
+| `sch` | Schistosomiasis (bilharzia) |
+| `sth` | Soil-transmitted helminths |
+| `trachoma` | Trachoma |
+| `coendemicity` | Co-endemicity reporting |
+
+The ESPENAPI package provides direct R access to this data through
+the ESPEN portal API, so you can download, analyse, and visualise
+NTD data entirely within R.
+
+---
+
+## Getting started
+
+### Step 1: Get an API key
+
+Request a free API key from the ESPEN portal:
+<https://espen.afro.who.int>
+
+### Step 2: Store the key safely
+
+Never paste your key directly into scripts — store it in your `.Renviron`
+file instead:
+
+```{r key-setup}
+# Run this once to open your .Renviron file
+usethis::edit_r_environ()
+```
+
+Add this line, replacing the placeholder:
+
+```
+ESPEN_API_KEY=your_key_here
+```
+
+Save the file and restart R. The key will then be found automatically
+by all ESPENAPI functions.
+
+For guided instructions, call:
+
+```{r key-setup2}
+espen_key_setup()
+```
+
+---
+
+## Basic usage
+
+### Download data for a single country
+
+```{r single-country}
 library(ESPENAPI)
-data  <- ESPEN_API_data(country="Nigeria", disease="sth", level="sitelevel", start_year=2010, end_year=2015)
-head(data)[,1:5] # view the subset of the data and just 5 columns
+
+# STH data for Nigeria at site level, 2010–2015
+dat <- ESPEN_API_data(
+  country    = "Nigeria",
+  disease    = "sth",
+  level      = "sitelevel",
+  start_year = 2010,
+  end_year   = 2015
+)
+
+dim(dat)
+head(dat)
+```
+
+### Explore what's available
+
+```{r reference-tables}
+# All valid disease codes
+espen_diseases()
+
+# All valid spatial levels
+espen_levels()
+```
+
+---
+
+## Choosing the spatial level
+
+ESPEN data is available at two spatial levels:
+
+**Implementation unit (`level = "iu"`)** is the administrative unit used
+for MDA (mass drug administration) programme planning — typically a
+district or sub-district. Use this for programme coverage and
+endemicity summaries.
+
+```{r iu-level}
+lf_iu <- ESPEN_API_data(
+  country    = "Ghana",
+  disease    = "lf",
+  level      = "iu",
+  start_year = 2015,
+  end_year   = 2020
+)
+head(lf_iu)
+```
+
+**Site level (`level = "sitelevel"`)** contains individual survey or
+sentinel site results, including sample sizes and prevalence estimates.
+Use this for epidemiological analysis.
+
+```{r site-level}
+lf_sites <- ESPEN_API_data(
+  country    = "Ghana",
+  disease    = "lf",
+  level      = "sitelevel",
+  start_year = 2015,
+  end_year   = 2020
+)
+head(lf_sites)
+```
+
+---
+
+## Downloading data for multiple countries
+
+Pass a vector of country names (or ISO2 codes) to get data for all of
+them in one combined data frame:
+
+```{r multi-country}
+# Three countries in one call
+multi <- ESPEN_API_data(
+  country    = c("Nigeria", "Ghana", "Kenya"),
+  disease    = "sth",
+  level      = "sitelevel",
+  start_year = 2010,
+  end_year   = 2015,
+  verbose    = TRUE   # shows progress for each country
+)
+
+nrow(multi)
+table(multi$Country)
+```
+
+ISO2 codes work the same way:
+
+```{r iso2-multi}
+multi_iso <- ESPEN_API_data(
+  iso2       = c("NG", "GH", "KE"),
+  disease    = "sth",
+  level      = "sitelevel",
+  start_year = 2010,
+  end_year   = 2015
+)
+```
+
+---
+
+## Forecast data (MDA and impact assessment)
+
+To request forecast data rather than observed data, set `type = TRUE`
+and specify a `subtype`:
+
+```{r forecast}
+# MDA forecast for Nigeria
+mda <- ESPEN_API_data(
+  country = "Nigeria",
+  disease = "sth",
+  level   = "iu",
+  type    = TRUE,
+  subtype = "mda"
+)
+
+# Impact assessment forecast
+impact <- ESPEN_API_data(
+  country = "Nigeria",
+  disease = "sth",
+  level   = "iu",
+  type    = TRUE,
+  subtype = "impact_assessment"
+)
+```
+
+---
+
+## Limiting columns returned
+
+Use `attributes` to request only specific columns — useful for large
+downloads:
+
+```{r attributes}
+slim <- ESPEN_API_data(
+  country    = "Nigeria",
+  disease    = "sth",
+  level      = "iu",
+  start_year = 2015,
+  end_year   = 2020,
+  attributes = "IU_ID,Endemicity,MDA,EffMDA"
+)
+names(slim)
+```
+
+---
+
+## Pagination
+
+For very large queries, use `limit` and `offset` to page through results:
+
+```{r pagination}
+# First 500 records
+page1 <- ESPEN_API_data(
+  country = "Nigeria", disease = "sth",
+  level   = "sitelevel",
+  limit   = 500, offset = 0
+)
+
+# Next 500 records
+page2 <- ESPEN_API_data(
+  country = "Nigeria", disease = "sth",
+  level   = "sitelevel",
+  limit   = 500, offset = 500
+)
+```
+
+---
+
+## Accessing the raw JSON
+
+Set `df = FALSE` to get the raw API response as an `ESPEN_api` object
+rather than a parsed data frame. This is useful for debugging or when
+you want to handle the JSON parsing yourself.
+
+```{r raw}
+raw <- ESPEN_API_data(
+  country = "Nigeria",
+  disease = "sth",
+  level   = "sitelevel",
+  df      = FALSE
+)
+
+# Print method shows status and size
+print(raw)
+
+# Access content
+cat(substr(raw$content, 1, 200))
+```
+
+---
+
+## Worked example: comparing STH prevalence across West Africa
+
+```{r worked-example}
+library(ESPENAPI)
+library(ggplot2)
+
+# Download site-level STH data for West African countries
+west_africa <- ESPEN_API_data(
+  country    = c("Nigeria", "Ghana", "Senegal", "Mali", "Burkina Faso"),
+  disease    = "sth",
+  level      = "sitelevel",
+  start_year = 2010,
+  end_year   = 2020,
+  verbose    = TRUE
+)
+
+# Example: plot record counts per country per year
+library(dplyr)
+
+west_africa %>%
+  group_by(Country, Year) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  ggplot(aes(x = Year, y = n, colour = Country)) +
+  geom_line() +
+  geom_point() +
+  labs(
+    title = "ESPEN STH site-level records",
+    y     = "Number of survey sites",
+    x     = "Year"
+  ) +
+  theme_bw()
 ```

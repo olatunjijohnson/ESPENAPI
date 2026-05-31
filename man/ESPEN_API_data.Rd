@@ -2,7 +2,7 @@
 % Please edit documentation in R/ESPEN_API_data.R
 \name{ESPEN_API_data}
 \alias{ESPEN_API_data}
-\title{Request data from the ESPEN portal API}
+\title{Download NTD data from the ESPEN portal}
 \usage{
 ESPEN_API_data(
   api_key = NULL,
@@ -17,76 +17,119 @@ ESPEN_API_data(
   limit = NULL,
   offset = NULL,
   attributes = NULL,
-  df = TRUE
+  df = TRUE,
+  verbose = FALSE
 )
 }
 \arguments{
-\item{api_key}{API key from the ESPEN portal. If \code{NULL} (default) the
-function reads the \code{ESPEN_API_KEY} environment variable.}
+\item{api_key}{API key from the ESPEN portal. Defaults to \code{NULL},
+which reads the \code{ESPEN_API_KEY} environment variable.}
 
-\item{country}{Country name, e.g. \code{"Nigeria"}. Either \code{country}
-or \code{iso2} must be supplied.}
+\item{country}{Character. Country name(s), e.g. \code{"Nigeria"} or
+\code{c("Nigeria", "Ghana", "Kenya")}. Case-insensitive. Either
+\code{country} or \code{iso2} must be supplied, not both.}
 
-\item{iso2}{ISO2 country code, e.g. \code{"NG"}. Alternative to
-\code{country}; ignored if \code{country} is also supplied.}
+\item{iso2}{Character. ISO2 country code(s), e.g. \code{"NG"} or
+\code{c("NG", "GH")}. Used only when \code{country} is \code{NULL}.}
 
-\item{disease}{Disease of interest. One of \code{"lf"}, \code{"oncho"},
+\item{disease}{Disease code. One of \code{"lf"}, \code{"oncho"},
 \code{"loa"}, \code{"sch"}, \code{"sth"}, \code{"trachoma"},
-\code{"coendemicity"}. Default \code{"sth"}.}
+\code{"coendemicity"}. Default \code{"sth"}.
+See \code{\link{espen_diseases}()} for full names and descriptions.}
 
-\item{level}{Spatial level of the data. \code{"iu"} (implementation unit)
-or \code{"sitelevel"}. Default \code{"sitelevel"}.}
+\item{level}{Spatial level. \code{"iu"} (implementation unit) or
+\code{"sitelevel"}. Default \code{"sitelevel"}.
+See \code{\link{espen_levels}()} for descriptions.}
 
-\item{type}{Logical. Set \code{TRUE} to request forecast data
-(MDA or impact assessment). Default \code{FALSE}.}
+\item{type}{Logical. \code{TRUE} to request forecast data (MDA or impact
+assessment). Default \code{FALSE}.}
 
 \item{subtype}{Used only when \code{type = TRUE}. One of \code{"mda"} or
 \code{"impact_assessment"}. Default \code{"mda"}.}
 
-\item{start_year}{Starting year, e.g. \code{2010}.}
+\item{start_year}{Integer. First year of data, e.g. \code{2010}.}
 
-\item{end_year}{Ending year, e.g. \code{2020}.}
+\item{end_year}{Integer. Last year of data, e.g. \code{2020}.
+Must be >= \code{start_year}.}
 
-\item{limit}{Maximum number of records to return.}
+\item{limit}{Integer. Maximum number of records to return per request.
+Useful for pagination. Default returns all available records.}
 
-\item{offset}{Number of records to skip (for pagination).}
+\item{offset}{Integer. Number of records to skip. Use with \code{limit}
+to page through large datasets.}
 
-\item{attributes}{Character string of attribute names to return, e.g.
-\code{"IU_ID,Endemicity,MDA,EffMDA"}.}
+\item{attributes}{Character. Comma-separated list of column names to
+return, e.g. \code{"IU_ID,Endemicity,MDA,EffMDA"}. Default returns all
+columns.}
 
-\item{df}{Logical. Return a data frame (\code{TRUE}, default) or a list
-containing the raw JSON string and response object (\code{FALSE}).}
+\item{df}{Logical. Return a data frame (\code{TRUE}, default) or an
+\code{ESPEN_api} object containing the raw JSON and response
+(\code{FALSE}).}
+
+\item{verbose}{Logical. Print progress messages when downloading data for
+multiple countries. Default \code{FALSE}.}
 }
 \value{
-A data frame or a named list of class \code{"ESPEN_api"}.
+A \code{data.frame} (when \code{df = TRUE}) or an object of class
+  \code{ESPEN_api} (when \code{df = FALSE}).
+  When multiple countries are requested, rows are combined with
+  \code{rbind}.
 }
 \description{
-Downloads Neglected Tropical Disease (NTD) data from the ESPEN
-  portal for one or more countries. Parameters follow the ESPEN API
-  specification at \url{https://espenjapapi.afro.who.int/docs/api/data}.
+Fetches Neglected Tropical Disease (NTD) data from the ESPEN portal API
+for one or more countries. The function accepts a vector of country names
+or ISO2 codes and returns a single combined data frame.
 }
 \details{
-An API key is required. Request one from the ESPEN portal at
-  \url{https://espen.afro.who.int}. The recommended approach is to store it
-  in your \code{.Renviron} file as \code{ESPEN_API_KEY=your_key} (run
-  \code{usethis::edit_r_environ()} to open the file). The function will then
-  pick it up automatically without you needing to pass it each time.
+An API key is required. Run \code{\link{espen_key_setup}()} for setup
+instructions, or see the package documentation.
+
+Use \code{\link{espen_diseases}()} and \code{\link{espen_levels}()} to
+browse valid values for the \code{disease} and \code{level} arguments.
 }
 \examples{
 \dontrun{
-# Store your key in .Renviron first:
-#   usethis::edit_r_environ()
-#   Add line: ESPEN_API_KEY=your_key_here
-
-# STH data for Nigeria at site level, 2010-2015
-data <- ESPEN_API_data(
+# Single country — STH data at site level
+dat <- ESPEN_API_data(
   country    = "Nigeria",
   disease    = "sth",
   level      = "sitelevel",
   start_year = 2010,
   end_year   = 2015
 )
-head(data)
+head(dat)
+
+# Multiple countries in one call
+dat_multi <- ESPEN_API_data(
+  country    = c("Nigeria", "Ghana", "Kenya"),
+  disease    = "lf",
+  level      = "iu",
+  start_year = 2015,
+  end_year   = 2020,
+  verbose    = TRUE
+)
+table(dat_multi$Country)
+
+# Using ISO2 codes
+dat_iso <- ESPEN_API_data(
+  iso2       = c("NG", "GH"),
+  disease    = "sth",
+  level      = "sitelevel",
+  start_year = 2010,
+  end_year   = 2010
+)
+
+# Return raw JSON instead of a data frame
+raw <- ESPEN_API_data(
+  country = "Nigeria",
+  disease = "sth",
+  df      = FALSE
+)
+print(raw)
+
+# Browse available diseases and levels
+espen_diseases()
+espen_levels()
 }
 }
 \author{

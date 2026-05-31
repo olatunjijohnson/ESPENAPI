@@ -1,56 +1,104 @@
-#' @title Request data from the ESPEN portal API
-#' @description Downloads Neglected Tropical Disease (NTD) data from the ESPEN
-#'   portal for one or more countries. Parameters follow the ESPEN API
-#'   specification at \url{https://espenjapapi.afro.who.int/docs/api/data}.
-#' @details An API key is required. Request one from the ESPEN portal at
-#'   \url{https://espen.afro.who.int}. The recommended approach is to store it
-#'   in your \code{.Renviron} file as \code{ESPEN_API_KEY=your_key} (run
-#'   \code{usethis::edit_r_environ()} to open the file). The function will then
-#'   pick it up automatically without you needing to pass it each time.
+#' Download NTD data from the ESPEN portal
 #'
-#' @param api_key API key from the ESPEN portal. If \code{NULL} (default) the
-#'   function reads the \code{ESPEN_API_KEY} environment variable.
-#' @param country Country name, e.g. \code{"Nigeria"}. Either \code{country}
-#'   or \code{iso2} must be supplied.
-#' @param iso2 ISO2 country code, e.g. \code{"NG"}. Alternative to
-#'   \code{country}; ignored if \code{country} is also supplied.
-#' @param disease Disease of interest. One of \code{"lf"}, \code{"oncho"},
+#' Fetches Neglected Tropical Disease (NTD) data from the ESPEN portal API
+#' for one or more countries. The function accepts a vector of country names
+#' or ISO2 codes and returns a single combined data frame.
+#'
+#' @details
+#' An API key is required. Run \code{\link{espen_key_setup}()} for setup
+#' instructions, or see the package documentation.
+#'
+#' Use \code{\link{espen_diseases}()} and \code{\link{espen_levels}()} to
+#' browse valid values for the \code{disease} and \code{level} arguments.
+#'
+#' @param api_key API key from the ESPEN portal. Defaults to \code{NULL},
+#'   which reads the \code{ESPEN_API_KEY} environment variable.
+#' @param country Character. Country name(s), e.g. \code{"Nigeria"} or
+#'   \code{c("Nigeria", "Ghana", "Kenya")}. Case-insensitive. Either
+#'   \code{country} or \code{iso2} must be supplied, not both.
+#' @param iso2 Character. ISO2 country code(s), e.g. \code{"NG"} or
+#'   \code{c("NG", "GH")}. Used only when \code{country} is \code{NULL}.
+#' @param disease Disease code. One of \code{"lf"}, \code{"oncho"},
 #'   \code{"loa"}, \code{"sch"}, \code{"sth"}, \code{"trachoma"},
 #'   \code{"coendemicity"}. Default \code{"sth"}.
-#' @param level Spatial level of the data. \code{"iu"} (implementation unit)
-#'   or \code{"sitelevel"}. Default \code{"sitelevel"}.
-#' @param type Logical. Set \code{TRUE} to request forecast data
-#'   (MDA or impact assessment). Default \code{FALSE}.
+#'   See \code{\link{espen_diseases}()} for full names and descriptions.
+#' @param level Spatial level. \code{"iu"} (implementation unit) or
+#'   \code{"sitelevel"}. Default \code{"sitelevel"}.
+#'   See \code{\link{espen_levels}()} for descriptions.
+#' @param type Logical. \code{TRUE} to request forecast data (MDA or impact
+#'   assessment). Default \code{FALSE}.
 #' @param subtype Used only when \code{type = TRUE}. One of \code{"mda"} or
 #'   \code{"impact_assessment"}. Default \code{"mda"}.
-#' @param start_year Starting year, e.g. \code{2010}.
-#' @param end_year Ending year, e.g. \code{2020}.
-#' @param limit Maximum number of records to return.
-#' @param offset Number of records to skip (for pagination).
-#' @param attributes Character string of attribute names to return, e.g.
-#'   \code{"IU_ID,Endemicity,MDA,EffMDA"}.
-#' @param df Logical. Return a data frame (\code{TRUE}, default) or a list
-#'   containing the raw JSON string and response object (\code{FALSE}).
+#' @param start_year Integer. First year of data, e.g. \code{2010}.
+#' @param end_year Integer. Last year of data, e.g. \code{2020}.
+#'   Must be >= \code{start_year}.
+#' @param limit Integer. Maximum number of records to return per request.
+#'   Useful for pagination. Default returns all available records.
+#' @param offset Integer. Number of records to skip. Use with \code{limit}
+#'   to page through large datasets.
+#' @param attributes Character. Comma-separated list of column names to
+#'   return, e.g. \code{"IU_ID,Endemicity,MDA,EffMDA"}. Default returns all
+#'   columns.
+#' @param df Logical. Return a data frame (\code{TRUE}, default) or an
+#'   \code{ESPEN_api} object containing the raw JSON and response
+#'   (\code{FALSE}).
+#' @param verbose Logical. Print progress messages when downloading data for
+#'   multiple countries. Default \code{FALSE}.
 #'
-#' @return A data frame or a named list of class \code{"ESPEN_api"}.
+#' @return A \code{data.frame} (when \code{df = TRUE}) or an object of class
+#'   \code{ESPEN_api} (when \code{df = FALSE}).
+#'   When multiple countries are requested, rows are combined with
+#'   \code{rbind}.
+#'
 #' @export
-#' @import httr jsonlite
+#' @importFrom httr GET http_type http_error status_code
+#' @importFrom jsonlite fromJSON
+#'
 #' @author Olatunji Johnson \email{olatunjijohnson21111@@gmail.com}
+#'
 #' @examples
 #' \dontrun{
-#' # Store your key in .Renviron first:
-#' #   usethis::edit_r_environ()
-#' #   Add line: ESPEN_API_KEY=your_key_here
-#'
-#' # STH data for Nigeria at site level, 2010-2015
-#' data <- ESPEN_API_data(
+#' # Single country — STH data at site level
+#' dat <- ESPEN_API_data(
 #'   country    = "Nigeria",
 #'   disease    = "sth",
 #'   level      = "sitelevel",
 #'   start_year = 2010,
 #'   end_year   = 2015
 #' )
-#' head(data)
+#' head(dat)
+#'
+#' # Multiple countries in one call
+#' dat_multi <- ESPEN_API_data(
+#'   country    = c("Nigeria", "Ghana", "Kenya"),
+#'   disease    = "lf",
+#'   level      = "iu",
+#'   start_year = 2015,
+#'   end_year   = 2020,
+#'   verbose    = TRUE
+#' )
+#' table(dat_multi$Country)
+#'
+#' # Using ISO2 codes
+#' dat_iso <- ESPEN_API_data(
+#'   iso2       = c("NG", "GH"),
+#'   disease    = "sth",
+#'   level      = "sitelevel",
+#'   start_year = 2010,
+#'   end_year   = 2010
+#' )
+#'
+#' # Return raw JSON instead of a data frame
+#' raw <- ESPEN_API_data(
+#'   country = "Nigeria",
+#'   disease = "sth",
+#'   df      = FALSE
+#' )
+#' print(raw)
+#'
+#' # Browse available diseases and levels
+#' espen_diseases()
+#' espen_levels()
 #' }
 ESPEN_API_data <- function(api_key    = NULL,
                            country    = NULL,
@@ -64,104 +112,58 @@ ESPEN_API_data <- function(api_key    = NULL,
                            limit      = NULL,
                            offset     = NULL,
                            attributes = NULL,
-                           df         = TRUE) {
+                           df         = TRUE,
+                           verbose    = FALSE) {
 
-  # ---- API key ----------------------------------------------------------
-  if (is.null(api_key)) {
-    api_key <- Sys.getenv("ESPEN_API_KEY")
-    if (nchar(trimws(api_key)) == 0)
-      stop(
-        "No API key found. Set ESPEN_API_KEY in your .Renviron ",
-        "(run usethis::edit_r_environ()) or pass api_key directly.",
-        call. = FALSE
-      )
-  }
+  api_key <- resolve_api_key(api_key)
 
-  # ---- Input validation -------------------------------------------------
   if (is.null(country) && is.null(iso2))
-    stop("Supply a country name (country='Nigeria') or ISO2 code (iso2='NG').",
-         call. = FALSE)
+    stop("Supply country name(s) (country = 'Nigeria') or ",
+         "ISO2 code(s) (iso2 = 'NG').", call. = FALSE)
 
-  valid_diseases <- c("lf", "oncho", "loa", "sch", "sth", "trachoma",
-                      "coendemicity")
-  if (!disease %in% valid_diseases)
-    stop("disease must be one of: ", paste(valid_diseases, collapse = ", "),
-         call. = FALSE)
+  validate_inputs(disease, level, subtype, start_year, end_year)
 
-  if (!level %in% c("iu", "sitelevel"))
-    stop("level must be 'iu' or 'sitelevel'", call. = FALSE)
+  # Support vectors of country names or ISO2 codes
+  locations  <- if (!is.null(country)) country else iso2
+  use_iso2   <- is.null(country)
 
-  if (!subtype %in% c("mda", "impact_assessment"))
-    stop("subtype must be 'mda' or 'impact_assessment'", call. = FALSE)
-
-  # ---- Build query string -----------------------------------------------
-  if (!is.null(country)) {
-    country <- paste0(
-      toupper(substr(country, 1, 1)),
-      tolower(substr(country, 2, nchar(country)))
-    )
-    location <- paste0("country=", country, "&")
-  } else {
-    location <- paste0("iso2=", toupper(iso2), "&")
+  if (length(locations) > 1) {
+    if (verbose)
+      message("Downloading ", disease, " data for ", length(locations),
+              " countries...")
+    results <- lapply(locations, function(loc) {
+      if (verbose) message("  Fetching: ", loc)
+      args <- list(
+        api_key = api_key, disease = disease, level = level,
+        type = type, subtype = subtype,
+        start_year = start_year, end_year = end_year,
+        limit = limit, offset = offset, attributes = attributes,
+        df = df, verbose = FALSE
+      )
+      args[[if (use_iso2) "iso2" else "country"]] <- loc
+      do.call(ESPEN_API_data, args)
+    })
+    if (df) return(do.call(rbind, results))
+    # For df = FALSE, return a list of ESPEN_api objects
+    return(results)
   }
 
-  disease_q <- paste0("disease=", disease, "&")
-  level_q   <- paste0("level=",   level,   "&")
-
-  if (type) {
-    type_q    <- "type=forecast&"
-    subtype_q <- paste0("subtype=", subtype, "&")
-  } else {
-    type_q    <- NULL
-    subtype_q <- NULL
-  }
-
-  if (!is.null(start_year)) start_year <- paste0("start_year=", start_year, "&")
-  if (!is.null(end_year))   end_year   <- paste0("end_year=",   end_year,   "&")
-  if (!is.null(limit))      limit      <- paste0("limit=",      limit,      "&")
-  if (!is.null(offset))     offset     <- paste0("offset=",     offset,     "&")
-  if (!is.null(attributes)) attributes <- paste0("attributes=", attributes, "&")
-
-  api_url <- paste0(
-    "https://espenjapapi.afro.who.int/api/data?",
-    location, disease_q, level_q, type_q, subtype_q,
-    start_year, end_year, limit, offset, attributes,
-    "api_key=", api_key
+  # Single location
+  url <- build_url(
+    country    = if (!use_iso2) locations else NULL,
+    iso2       = if (use_iso2)  locations else NULL,
+    disease    = disease,
+    level      = level,
+    type       = type,
+    subtype    = subtype,
+    start_year = start_year,
+    end_year   = end_year,
+    limit      = limit,
+    offset     = offset,
+    attributes = attributes,
+    api_key    = api_key
   )
 
-  # ---- HTTP request -----------------------------------------------------
-  res <- httr::GET(api_url)
-
-  if (httr::http_type(res) != "application/json")
-    stop("API did not return JSON — the endpoint may have changed.",
-         call. = FALSE)
-
-  if (httr::http_error(res)) {
-    body <- rawToChar(res$content)
-    msg  <- if (nchar(trimws(body)) > 0) {
-      tryCatch(
-        jsonlite::fromJSON(body, simplifyVector = FALSE)$message %||%
-          "No message in response.",
-        error = function(e) body
-      )
-    } else {
-      "No error detail returned by the API."
-    }
-    stop(sprintf("ESPEN API request failed [%s]: %s",
-                 httr::status_code(res), msg),
-         call. = FALSE)
-  }
-
-  # ---- Parse and return -------------------------------------------------
-  if (df) {
-    jsonlite::fromJSON(rawToChar(res$content))
-  } else {
-    structure(
-      list(content = rawToChar(res$content), url = api_url, response = res),
-      class = "ESPEN_api"
-    )
-  }
+  res <- httr::GET(url)
+  parse_espen_response(res, url, df)
 }
-
-# null-coalescing helper (avoids a purrr dependency)
-`%||%` <- function(x, y) if (!is.null(x)) x else y
