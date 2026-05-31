@@ -1,22 +1,22 @@
 Package: ESPENAPI
 Type: Package
 Title: Access NTD Data from the ESPEN Portal API
-Version: 0.3.0
+Version: 0.4.0
 Authors@R: c(
     person("Olatunji", "Johnson", role = c("cre", "aut"),
            email = "olatunjijohnson21111@gmail.com",
            comment = c(ORCID = "0000-0002-4080-0999")),
     person("Claudio", "Fronterre", role = "ctb",
            comment = c(ORCID = "0000-0001-6723-9727")))
-Description: Provides a single function to download Neglected Tropical Disease
-    (NTD) data from the ESPEN (Expanded Special Project for Elimination of
-    Neglected Tropical Diseases) portal API. Users supply a country name or
-    ISO2 code, disease, spatial level, and optional year range, and receive a
-    tidy data frame. Supported diseases include lymphatic filariasis (lf),
-    onchocerciasis (oncho), loiasis (loa), schistosomiasis (sch), soil-
-    transmitted helminths (sth), trachoma, and co-endemicity. An API key is
-    required and can be obtained from the ESPEN portal at
-    <https://espen.afro.who.int>.
+Description: Provides R access to Neglected Tropical Disease (NTD) data from
+    two sources. The primary source is the ESPEN (Expanded Special Project for
+    Elimination of Neglected Tropical Diseases) portal API, which covers all 7
+    NTDs at both country and site level but requires an API key. As a no-
+    authentication alternative, the package also wraps the WHO Global Health
+    Observatory (GHO) OData API, which provides country-level onchocerciasis
+    and trachoma indicators with no registration required. Users supply a
+    country, disease, spatial level, and optional year range to receive a tidy
+    data frame.
 Imports:
     httr,
     jsonlite

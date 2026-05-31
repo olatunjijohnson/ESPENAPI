@@ -10,13 +10,19 @@
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html)
 <!-- badges: end -->
 
-**ESPENAPI** gives R users direct access to the [ESPEN
-portal](https://espen.afro.who.int) API — the WHO’s data repository for
-Neglected Tropical Disease (NTD) programme data across Africa.
+**ESPENAPI** gives R users access to Neglected Tropical Disease (NTD)
+data from two sources:
 
-Instead of navigating the ESPEN website, selecting filters, and
-downloading CSV files manually, you can pull any combination of country,
-disease, year, and spatial level into R in a single line.
+| Source | Auth needed | Diseases | Level |
+|----|----|----|----|
+| [ESPEN portal API](https://espen.afro.who.int) | API key | All 7 NTDs | Country + site level |
+| [WHO GHO API](https://www.who.int/data/gho/info/gho-odata-api) | **None** | Onchocerciasis, Trachoma | Country level only |
+
+> **Note on ESPEN API keys:** ESPEN has paused issuing new API keys.
+> Existing keys may also have expired. If you cannot get a key, use the
+> WHO GHO functions (`gho_ntd_data()`) as a no-auth alternative for
+> onchocerciasis and trachoma data, or contact the ESPEN team directly
+> at <ntd.espen@who.int> to request data access.
 
 ------------------------------------------------------------------------
 
@@ -47,14 +53,42 @@ remotes::install_github("olatunjijohnson/ESPENAPI")
 
 ------------------------------------------------------------------------
 
-## API key setup
+## No API key? Use the WHO GHO alternative
 
-All requests to the ESPEN portal require a free API key.
+If you cannot get an ESPEN API key, `gho_ntd_data()` provides
+**no-authentication** access to country-level onchocerciasis and
+trachoma data via the WHO Global Health Observatory API:
 
-**Step 1** — Request a key at <https://espen.afro.who.int>
+``` r
+library(ESPENAPI)
 
-**Step 2** — Store it in your `.Renviron` file (never paste it into
-scripts):
+# Works immediately — no key, no registration
+oncho <- gho_ntd_data(
+  indicator  = "NTD_ONCTREAT",
+  country    = c("NGA", "GHA", "CMR"),
+  start_year = 2015,
+  end_year   = 2022
+)
+head(oncho)
+
+# See which indicators are available
+gho_ntd_indicators()
+```
+
+See the [WHO GHO section](#who-gho-api-no-key-required) below for full
+details.
+
+------------------------------------------------------------------------
+
+## ESPEN API key setup
+
+ESPEN API keys are **currently not being issued**. If you already have a
+key or manage to obtain one, store it in your `.Renviron`:
+
+**Step 1** — Request a key at <https://espen.afro.who.int> or email
+<ntd.espen@who.int> directly.
+
+**Step 2** — Store it in your `.Renviron` file:
 
 ``` r
 usethis::edit_r_environ()
@@ -424,18 +458,90 @@ ggplot(summary_dat, aes(x = Year, y = mean_prev, colour = Country)) +
 
 ------------------------------------------------------------------------
 
+## WHO GHO API — no key required
+
+The WHO [Global Health
+Observatory](https://www.who.int/data/gho/info/gho-odata-api) OData API
+is publicly accessible with no authentication. The package provides
+`gho_ntd_data()` as a no-key alternative for onchocerciasis and trachoma
+data.
+
+**Scope of GHO vs ESPEN:**
+
+|  | ESPEN | WHO GHO |
+|----|----|----|
+| Auth required | Yes (API key) | **No** |
+| Diseases | All 7 NTDs | Onchocerciasis, trachoma only |
+| Data level | Country + **site level** | Country only |
+| Data content | Survey prevalence, MDA records | Treatment numbers, endemicity status |
+
+### GHO examples
+
+``` r
+# Onchocerciasis treatment — no API key needed
+oncho <- gho_ntd_data(
+  indicator  = "NTD_ONCTREAT",
+  start_year = 2015,
+  end_year   = 2022
+)
+head(oncho)
+#>   indicator_code                    indicator_name country_iso3 year    value
+#> 1  NTD_ONCTREAT  Number of individuals treated...          SDN 2024        0
+#> 2  NTD_ONCTREAT  Number of individuals treated...          MLI 2021        0
+#> 3  NTD_ONCTREAT  Number of individuals treated...          LBR 2024  3115708
+
+# Filter to specific countries
+oncho_wa <- gho_ntd_data(
+  indicator  = "NTD_ONCTREAT",
+  country    = c("NGA", "GHA", "CMR", "CIV"),
+  start_year = 2015,
+  end_year   = 2022
+)
+
+# Multiple indicators at once
+oncho_all <- gho_ntd_data(
+  indicator = c("NTD_ONCTREAT", "NTD_ONCHSTATUS", "NTD_ONCHEMO"),
+  country   = c("NGA", "GHA"),
+  verbose   = TRUE
+)
+
+# See all available NTD indicators in GHO
+gho_ntd_indicators()
+```
+
+### Available GHO indicators
+
+    #> Warning in attr(x, "align"): 'xfun::attr()' is deprecated.
+    #> Use 'xfun::attr2()' instead.
+    #> See help("Deprecated")
+    #> Warning in attr(x, "format"): 'xfun::attr()' is deprecated.
+    #> Use 'xfun::attr2()' instead.
+    #> See help("Deprecated")
+
+| ESPEN disease | GHO code | Description |
+|:---|:---|:---|
+| oncho | NTD_ONCTREAT | Number of individuals treated for onchocerciasis |
+| oncho | NTD_ONCHSTATUS | Status of endemicity of onchocerciasis |
+| oncho | NTD_ONCHEMO | Number requiring preventive chemotherapy for onchocerciasis |
+| trachoma | NTD_8 | Number of people treated with antibiotics for trachoma |
+| trachoma | NTD_7 | Population in areas warranting treatment for trachoma |
+| trachoma | NTD_6 | Status of elimination of trachoma as a public health problem |
+| trachoma | NTD_TRA5 | Number of people operated for trachomatous trichiasis |
+
+------------------------------------------------------------------------
+
 ## Troubleshooting
 
 **`No API key found`** Your key is not in the environment. Run
 `usethis::edit_r_environ()`, add `ESPEN_API_KEY=your_key`, save, and
 restart R. Verify with `nchar(Sys.getenv("ESPEN_API_KEY")) > 0`.
 
-**`ESPEN API request failed [401]`** Your key is invalid or has expired.
-Request a new one from the ESPEN portal at <https://espen.afro.who.int>.
+**`ESPEN API request failed [401]`** Your key is invalid, expired, or
+new keys are not currently being issued. Try the WHO GHO alternative
+(`gho_ntd_data()`) or contact <ntd.espen@who.int> directly.
 
 **`API did not return JSON`** The ESPEN API endpoint has changed or is
-temporarily unavailable. Check <https://espen.afro.who.int> for service
-announcements. The current endpoint is
+temporarily unavailable. The current endpoint is
 `https://espenjapapi.afro.who.int/api/data`.
 
 **`start_year must be <= end_year`** Year arguments are swapped — check
